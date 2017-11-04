@@ -1,0 +1,20 @@
+/*
+ * port_map.h
+ *
+ * Created: 11/4/2017 12:25:41 PM
+ *  Author: Teodor
+ */ 
+
+
+#ifndef PORT_MAP_H_
+#define PORT_MAP_H_
+
+#define TEST_LED1 IOPORT_CREATE_PIN(PORTB, 2)
+#define TEST_LED2 IOPORT_CREATE_PIN(PORTB, 3)
+#define GSM_POWER_EN IOPORT_CREATE_PIN(PORTD, 0)
+#define GSM_POWER_KEY IOPORT_CREATE_PIN(PORTD, 1)
+#define CHRG_EN IOPORT_CREATE_PIN(PORTB, 0)
+#define C_RXD0 IOPORT_CREATE_PIN(PORTC, 2)
+#define C_TXD0 IOPORT_CREATE_PIN(PORTC, 3)
+
+#endif /* PORT_MAP_H_ */

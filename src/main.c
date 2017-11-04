@@ -30,35 +30,8 @@
  */
 #include <asf.h>
 #include <string.h>
-
-void usart_receive(USART_t *usart, unsigned char *output, unsigned char size);
-void usart_send(USART_t *usart, unsigned char *data);
-
-void usart_send(USART_t *usart, unsigned char *data) {
-	while (*data) {
-		usart_putchar(usart, (unsigned char) *data);
-		data++;
-	}
-}
-
-void usart_receive(USART_t *usart, unsigned char *output, unsigned char size) {
-	uint8_t i = 0;
-	while (i < size - 1) {
-		unsigned char c = (unsigned char) usart_getchar(usart);
-		//while(!usart_rx_is_complete(usart));
-		usart_clear_rx_complete(usart);
-		if (c == '\0') break;
-		output[i++] = c;
-	}
-}
-
-#define TEST_LED1 IOPORT_CREATE_PIN(PORTB, 2)
-#define TEST_LED2 IOPORT_CREATE_PIN(PORTB, 3)
-#define GSM_POWER_EN IOPORT_CREATE_PIN(PORTD, 0)
-#define GSM_POWER_KEY IOPORT_CREATE_PIN(PORTD, 1)
-#define CHRG_EN IOPORT_CREATE_PIN(PORTB, 0)
-#define C_RXD0 IOPORT_CREATE_PIN(PORTC, 2)
-#define C_TXD0 IOPORT_CREATE_PIN(PORTC, 3)
+#include <port_map.h>
+#include <usart_helpers.h>
 
 volatile unsigned char response_buf[10];
 volatile unsigned char response_index = 0;
