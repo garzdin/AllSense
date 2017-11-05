@@ -9,7 +9,7 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#define INITIAL_CAPACITY 2
+#define INITIAL_CAPACITY 0
 
 typedef struct {
 	uint8_t size;
