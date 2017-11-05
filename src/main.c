@@ -81,8 +81,8 @@ int main (void)
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
 	// Set debugger pin dir
-	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTE, 2), IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTE, 3), IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(E_RXD0, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(E_TXD0, IOPORT_DIR_OUTPUT);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 	
@@ -97,11 +97,11 @@ int main (void)
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
 	// Debugger options
-	static usart_rs232_options_t DEBUGGER_OPTIONS = {
-		.baudrate = 9600,
-		.charlength = USART_SERIAL_CHAR_LENGTH,
-		.paritytype = USART_SERIAL_PARITY,
-		.stopbits = USART_SERIAL_STOP_BIT
+	static usart_rs232_options_t USART_SERIAL_DEBUG_OPTIONS = {
+		.baudrate = USART_DEBUG_SERIAL_BAUDRATE,
+		.charlength = USART_DEBUG_SERIAL_CHAR_LENGTH,
+		.paritytype = USART_DEBUG_SERIAL_PARITY,
+		.stopbits = USART_DEBUG_SERIAL_STOP_BIT
 	};
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
@@ -110,7 +110,7 @@ int main (void)
 	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
-	usart_init_rs232(&USARTE0, &DEBUGGER_OPTIONS);
+	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);

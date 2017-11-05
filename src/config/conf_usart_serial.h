@@ -55,4 +55,12 @@
 #define USART_RX_Vect                   USARTC0_RXC_vect
 #define USART_TX_Vect                   USARTC0_TXC_vect
 
+#define USART_DEBUG_SERIAL                    &USARTE0
+#define USART_DEBUG_SERIAL_BAUDRATE           9600
+#define USART_DEBUG_SERIAL_CHAR_LENGTH        USART_CHSIZE_8BIT_gc
+#define USART_DEBUG_SERIAL_PARITY             USART_PMODE_DISABLED_gc
+#define USART_DEBUG_SERIAL_STOP_BIT           false
+#define USART_DEBUG_RX_Vect                   USARTE0_RXC_vect
+#define USART_DEBUG_TX_Vect                   USARTE0_TXC_vect
+
 #endif /* CONF_USART_SERIAL_H_INCLUDED */
