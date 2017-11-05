@@ -11,6 +11,9 @@
 #ifndef CONF_BOARD_H
 #define CONF_BOARD_H
 
+#define DEVELOPMENT 0
+#define PRODUCTION 1
+
 #define CONF_BOARD_ENABLE_USARTC0
 
 #endif // CONF_BOARD_H

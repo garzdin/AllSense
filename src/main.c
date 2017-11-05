@@ -28,19 +28,25 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
+
+#define ENVIRONMENT DEVELOPMENT
+
 #include <asf.h>
 #include <string.h>
 #include <port_map.h>
-#include <usart_helpers.h>
+#include <usart/usart_helpers.h>
+#include <buffer/buffer.h>
 
-volatile unsigned char response_buf[10];
-volatile unsigned char response_index = 0;
+volatile buffer_t response_buf;
 volatile bool command_ready = false;
 volatile bool powered_on = false;
 
 int main (void)
 {
 	uint8_t init_command[] = "AT\r";
+	
+	// Initialize response buffer
+	buffer_init(&response_buf);
 	
 	// Initialize board
 	board_init();
@@ -71,6 +77,14 @@ int main (void)
 	// Set USART pin direction
 	ioport_set_pin_dir(C_RXD0, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(C_TXD0, IOPORT_DIR_OUTPUT);
+
+#ifdef ENVIRONMENT
+	#if ENVIRONMENT == DEVELOPMENT
+	// Set debugger pin dir
+	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTE, 2), IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(IOPORT_CREATE_PIN(PORTE, 3), IOPORT_DIR_OUTPUT);
+	#endif // ENVIRONMENT == DEVELOPMENT
+#endif // ENVIRONMENT
 	
 	// USART options
 	static usart_rs232_options_t USART_SERIAL_OPTIONS = {
@@ -80,8 +94,25 @@ int main (void)
 		.stopbits = USART_SERIAL_STOP_BIT
 	};
 	
+#ifdef ENVIRONMENT
+	#if ENVIRONMENT == DEVELOPMENT
+	// Debugger options
+	static usart_rs232_options_t DEBUGGER_OPTIONS = {
+		.baudrate = 9600,
+		.charlength = USART_SERIAL_CHAR_LENGTH,
+		.paritytype = USART_SERIAL_PARITY,
+		.stopbits = USART_SERIAL_STOP_BIT
+	};
+	#endif // ENVIRONMENT == DEVELOPMENT
+#endif // ENVIRONMENT
+	
 	// Initialize USART
 	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
+#ifdef ENVIRONMENT
+	#if ENVIRONMENT == DEVELOPMENT
+	usart_init_rs232(&USARTE0, &DEBUGGER_OPTIONS);
+	#endif // ENVIRONMENT == DEVELOPMENT
+#endif // ENVIRONMENT
 	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
 	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
 		
@@ -100,22 +131,30 @@ int main (void)
 }
 
 ISR(USART_TX_Vect) {
-	if (command_ready == true) {
-		if (strstr((char*)response_buf, "OK")) {
-			powered_on = true;
+	if (powered_on == false) {
+		if (command_ready == true) {
+			if (strstr((char*)buffer_get(&response_buf), "OK")) {
+				powered_on = true;
+			}
+			command_ready = false;
 		}
-		command_ready = false;
 	}
 }
 
 ISR(USART_RX_Vect) {
 	uint8_t c = usart_getchar(USART_SERIAL);
-	response_buf[response_index] = c;
 	if (c == '\r' || c == '\n') {
-		response_index = 0;
 		command_ready = true;
 	} else {
-		response_index++;
+		buffer_append(&response_buf, c);
 	}
 	usart_clear_rx_complete(USART_SERIAL);
+#ifdef ENVIRONMENT
+	#if ENVIRONMENT == DEVELOPMENT
+	usart_put(&USARTE0, c);
+	if (c == '\r') {
+		usart_put(&USARTE0, '\n');
+	}
+	#endif // ENVIRONMENT == DEVELOPMENT
+#endif // ENVIRONMENT
 }

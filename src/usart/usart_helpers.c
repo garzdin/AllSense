@@ -6,7 +6,7 @@
  */
 
 #include <asf.h>
-#include <usart_helpers.h>
+#include <usart/usart_helpers.h>
 
 void usart_send(USART_t *usart, unsigned char *data) {
 	while (*data) {

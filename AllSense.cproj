@@ -279,18 +279,26 @@
     <Folder Include="src\ASF\xmega\utils\bit_handling\" />
     <Folder Include="src\ASF\xmega\utils\preprocessor\" />
     <Folder Include="src\config\" />
+    <Folder Include="src\buffer" />
+    <Folder Include="src\usart" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\ASF\xmega\drivers\usart\usart.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\buffer\buffer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\buffer\buffer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\port_map.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\usart_helpers.c">
+    <Compile Include="src\usart\usart_helpers.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\usart_helpers.h">
+    <Compile Include="src\usart\usart_helpers.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\xmega\drivers\usart\usart.h">
