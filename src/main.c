@@ -36,14 +36,14 @@
 #include <port_map.h>
 #include <usart/usart_helpers.h>
 #include <buffer/buffer.h>
+#include <command/command.h>
 
 volatile buffer_t response_buf;
 volatile bool command_ready = false;
-volatile bool powered_on = false;
 
 int main (void)
 {
-	uint8_t init_command[] = "AT\r";
+	buffer_t init_command = make_command((unsigned char *) "AT\r");
 	
 	// Initialize response buffer
 	buffer_init(&response_buf);
@@ -114,32 +114,34 @@ int main (void)
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
-	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
+	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
 		
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
-	
-	while (true) {
-		if (powered_on == false) {
-			usart_send(USART_SERIAL, init_command);
-		}
-		if (powered_on == true) {
-			ioport_set_value(TEST_LED1, true);
+		
+	// Send command to sync baud rate with MC 60
+	while(true) {
+		usart_send(USART_SERIAL, &init_command);
+		if (command_ready == true) {
+			command_ready = false;
+			if (check_response(response_buf, "OK")) {
+				buffer_free(&response_buf);
+				break;
+			}
 		}
 	}
+
+#ifdef ENVIRONMENT
+	#if ENVIRONMENT == DEVELOPMENT
+	ioport_set_value(TEST_LED1, true); // Turn on LED
+	#endif // ENVIRONMENT == DEVELOPMENT
+#endif // ENVIRONMENT
+	
+	while (true) {}
 }
 
-ISR(USART_TX_Vect) {
-	if (powered_on == false) {
-		if (command_ready == true) {
-			if (strstr((char*)buffer_get(&response_buf), "OK")) {
-				powered_on = true;
-			}
-			command_ready = false;
-		}
-	}
-}
+ISR(USART_TX_Vect) {}
 
 ISR(USART_RX_Vect) {
 	uint8_t c = usart_getchar(USART_SERIAL);
@@ -149,12 +151,4 @@ ISR(USART_RX_Vect) {
 		buffer_append(&response_buf, c);
 	}
 	usart_clear_rx_complete(USART_SERIAL);
-#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
-	usart_put(&USARTE0, c);
-	if (c == '\r') {
-		usart_put(&USARTE0, '\n');
-	}
-	#endif // ENVIRONMENT == DEVELOPMENT
-#endif // ENVIRONMENT
 }

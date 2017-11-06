@@ -7,21 +7,25 @@
 
 #include <asf.h>
 #include <usart/usart_helpers.h>
+#include <buffer/buffer.h>
 
-void usart_send(USART_t *usart, unsigned char *data) {
-	while (*data) {
-		usart_putchar(usart, (unsigned char) *data);
-		data++;
+void usart_send(USART_t *usart, buffer_t *buffer) {
+	uint8_t i = 0;
+	while (i < buffer->size) {
+		unsigned char c = (unsigned char) buffer_get_one(buffer, i);
+		usart_putchar(usart, c);
+		i++;
 	}
 }
 
-void usart_receive(USART_t *usart, unsigned char *output, unsigned char size) {
-	uint8_t i = 0;
-	while (i < size - 1) {
+buffer_t usart_receive(USART_t *usart) {
+	buffer_t response;
+	buffer_init(&response);
+	while (true) {
 		unsigned char c = (unsigned char) usart_getchar(usart);
-		//while(!usart_rx_is_complete(usart));
-		usart_clear_rx_complete(usart);
 		if (c == '\0') break;
-		output[i++] = c;
+		buffer_append(&response, c);
 	}
+	
+	return response;
 }

@@ -8,7 +8,9 @@
 #ifndef USART_HELPERS_H_
 #define USART_HELPERS_H_
 
-void usart_send(USART_t *usart, unsigned char *data);
-void usart_receive(USART_t *usart, unsigned char *output, unsigned char size);
+#include <buffer/buffer.h>
+
+void usart_send(USART_t *usart, buffer_t *buffer);
+buffer_t usart_receive(USART_t *usart);
 
 #endif /* USART_HELPERS_H_ */
