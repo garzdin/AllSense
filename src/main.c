@@ -125,7 +125,7 @@ int main (void)
 		usart_send(USART_SERIAL, &init_command);
 		if (command_ready == true) {
 			command_ready = false;
-			if (check_response(response_buf, "OK")) {
+			if (check_response(&response_buf, "OK")) {
 				buffer_free(&response_buf);
 				break;
 			}

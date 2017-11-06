@@ -14,6 +14,6 @@
 #include <buffer/buffer.h>
 
 buffer_t make_command(uint8_t * string);
-bool check_response(buffer_t buffer, const char * string);
+bool check_response(volatile buffer_t * buffer, const char * string);
 
 #endif /* COMMAND_H_ */
