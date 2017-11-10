@@ -19,8 +19,8 @@ buffer_t make_command(uint8_t * string) {
 	return command;
 }
 
-bool check_response(volatile buffer_t * buffer, const char * string) {
-	if (strstr((char*)buffer_get(buffer), string)) {
+bool check_response(volatile buffer_t * buffer, const char * expect) {
+	if (strstr((char*)buffer_get(buffer), expect)) {
 		return true;
 	}
 	
