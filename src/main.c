@@ -115,6 +115,12 @@ int main (void)
 		bool success = usart_send_and_expect(USART_SERIAL, "AT\r", "OK");
 		if (success) break;
 	}
+	
+	// Send command to set fixed baud rate for MC 60
+	while(true) {
+		bool success = usart_send_and_expect(USART_SERIAL, "AT+IPR=115200&W\r", "OK");
+		if (success) break;
+	}
 
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
