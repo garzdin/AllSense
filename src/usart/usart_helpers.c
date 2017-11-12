@@ -35,9 +35,9 @@ bool usart_send_and_expect(USART_t * usart, const char * command, const char * e
 	usart_send(usart, &command_buf);
 	buffer_t response = usart_receive(usart);
 	#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
-	usart_send(USART_DEBUG_SERIAL, &response);
-	#endif // ENVIRONMENT == DEVELOPMENT
+		#if ENVIRONMENT == DEVELOPMENT
+		usart_send(USART_DEBUG_SERIAL, &response);
+		#endif // ENVIRONMENT == DEVELOPMENT
 	#endif // ENVIRONMENT
 	if (check_response(&response, expect)) {
 		buffer_free(&command_buf);
