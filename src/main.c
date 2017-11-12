@@ -29,8 +29,6 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#define ENVIRONMENT DEVELOPMENT
-
 #include <asf.h>
 #include <string.h>
 #include <port_map.h>
@@ -38,16 +36,8 @@
 #include <buffer/buffer.h>
 #include <command/command.h>
 
-volatile buffer_t response_buf;
-volatile bool command_ready = false;
-
 int main (void)
-{
-	buffer_t init_command = make_command((unsigned char *) "AT\r");
-	
-	// Initialize response buffer
-	buffer_init(&response_buf);
-	
+{	
 	// Initialize board
 	board_init();
 	sysclk_init();
@@ -113,23 +103,17 @@ int main (void)
 	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
-	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
+	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
 	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
 		
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
-		
+	
 	// Send command to sync baud rate with MC 60
 	while(true) {
-		usart_send(USART_SERIAL, &init_command);
-		if (command_ready == true) {
-			command_ready = false;
-			if (check_response(&response_buf, "OK")) {
-				buffer_free(&response_buf);
-				break;
-			}
-		}
+		bool success = usart_send_and_expect(USART_SERIAL, "AT\r", "OK");
+		if (success) break;
 	}
 
 #ifdef ENVIRONMENT
@@ -143,12 +127,4 @@ int main (void)
 
 ISR(USART_TX_Vect) {}
 
-ISR(USART_RX_Vect) {
-	uint8_t c = usart_getchar(USART_SERIAL);
-	if (c == '\r' || c == '\n') {
-		command_ready = true;
-	} else {
-		buffer_append(&response_buf, c);
-	}
-	usart_clear_rx_complete(USART_SERIAL);
-}
+ISR(USART_RX_Vect) {}
