@@ -9,6 +9,9 @@
 #include <usart/usart_helpers.h>
 #include <buffer/buffer.h>
 
+#define CR '\r'
+#define NL '\n'
+
 void usart_send(USART_t *usart, buffer_t *buffer) {
 	uint8_t i = 0;
 	while (i < buffer->size) {
@@ -23,7 +26,7 @@ buffer_t usart_receive(USART_t *usart) {
 	buffer_init(&response);
 	while (true) {
 		uint8_t c = usart_getchar(usart);
-		if (c == '\r' || c == '\n') break;
+		if (c == CR || c == NL) break;
 		buffer_append(&response, c);
 	}
 	
