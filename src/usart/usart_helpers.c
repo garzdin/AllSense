@@ -30,8 +30,10 @@ void handle_rx_interrupt(USART_t * usart) {
 
 response_code_enum_t check_response(volatile buffer_t * buffer, const char * expect) {
 	if (strcmp((char *) buffer->data, expect)) {
+		buffer_free(buffer);
 		return RESPONSE_OK;
 	}
 	
+	buffer_free(buffer);
 	return RESPONSE_FAIL;
 };
