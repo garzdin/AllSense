@@ -5,52 +5,33 @@
  *  Author: Teodor
  */
 
-#include <asf.h>
 #include <usart/usart_helpers.h>
-#include <buffer/buffer.h>
 
-#define CR '\r'
-#define NL '\n'
-
-void usart_send(USART_t *usart, buffer_t *buffer) {
-	uint8_t i = 0;
-	while (i < buffer->size) {
-		unsigned char c = (unsigned char) buffer_get_one(buffer, i);
+void usart_send(USART_t *usart, const char * command) {
+	while (*command) {
+		uint8_t c = (uint8_t) *command;
 		usart_putchar(usart, c);
-		i++;
+		command++;
 	}
 }
 
-buffer_t usart_receive(USART_t *usart) {
-	buffer_t response;
-	buffer_init(&response);
-	while (true) {
-		uint8_t c = usart_getchar(usart);
-		if (c == CR || c == NL) break;
-		buffer_append(&response, c);
+void handle_rx_interrupt(USART_t * usart) {
+	uint8_t c = usart_getchar(usart);
+	buffer_return_t push = buffer_push(&rx_buffer, c);
+	if (push == BUFFER_ERROR) {
+		response_ready = 1;
 	}
-	
-	return response;
-}
-
-bool usart_send_and_expect(USART_t * usart, const char * command, const char * expect) {
-	buffer_t command_buf = make_command((uint8_t *) command);
-	usart_send(usart, &command_buf);
-	buffer_t response = usart_receive(usart);
 	#ifdef ENVIRONMENT
 		#if ENVIRONMENT == DEVELOPMENT
-		usart_send(USART_DEBUG_SERIAL, &response);
+		usart_putchar(USART_DEBUG_SERIAL, c);
 		#endif // ENVIRONMENT == DEVELOPMENT
 	#endif // ENVIRONMENT
-	if (check_response(&response, expect)) {
-		buffer_free(&command_buf);
-		buffer_free(&response);
-
-		return true;
-	}
-
-	buffer_free(&command_buf);
-	buffer_free(&response);
-
-	return false;
 }
+
+response_code_enum_t check_response(volatile buffer_t * buffer, const char * expect) {
+	if (strcmp((char *) buffer->data, expect)) {
+		return RESPONSE_OK;
+	}
+	
+	return RESPONSE_FAIL;
+};

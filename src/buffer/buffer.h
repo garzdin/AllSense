@@ -9,28 +9,38 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#define INITIAL_CAPACITY 0
+#define BUFFER_DEFAULT_SIZE 8
+
+typedef uint8_t buffer_el_t;
+
+typedef enum {
+	UNKNOWN,
+	BUFFER_EMPTY,
+	BUFFER_FULL,
+	BUFFER_READ,
+} buffer_state_t;
+
+typedef enum {
+	BUFFER_ERROR,
+	BUFFER_SUCCESS
+} buffer_return_t;
 
 typedef struct {
-	uint8_t size;
-	uint8_t capacity;
-	uint8_t *data;	
+	int head;
+	int tail;
+	uint8_t *data;
+	int size;
 } buffer_t;
 
-void buffer_init(volatile buffer_t *buffer);
+typedef struct {
+	buffer_el_t data;
+	buffer_return_t ret;
+} buffer_result_t;
 
-void buffer_append(volatile buffer_t *buffer, uint8_t value);
-
-uint8_t * buffer_get(volatile buffer_t *buffer);
-
-uint8_t buffer_get_one(volatile buffer_t *buffer, uint8_t index);
-
-void buffer_set(volatile buffer_t *buffer, uint8_t index, uint8_t value);
-
-void buffer_expand_capacity_if_full(volatile buffer_t *buffer);
-
-void buffer_free(volatile buffer_t *buffer);
-
-
+buffer_t buffer_init(int size);
+buffer_state_t buffer_state(volatile buffer_t *buffer);
+buffer_return_t buffer_push(volatile buffer_t *buffer, buffer_el_t data);
+buffer_result_t buffer_pop(volatile buffer_t *buffer);
+buffer_return_t buffer_free(volatile buffer_t *buffer);
 
 #endif /* BUFFER_H_ */

@@ -30,24 +30,27 @@
  */
 
 #include <asf.h>
-#include <string.h>
 #include <port_map.h>
 #include <usart/usart_helpers.h>
 #include <buffer/buffer.h>
-#include <command/command.h>
+
+volatile bool synced = false;
 
 int main (void)
 {	
 	// Initialize board
 	board_init();
 	sysclk_init();
-		
+			
 	// Disable interrupts
 	if(pmic_level_is_enabled(PMIC_LVL_LOW)) pmic_disable_level(PMIC_LVL_LOW);
 	if(pmic_level_is_enabled(PMIC_LVL_MEDIUM)) pmic_disable_level(PMIC_LVL_MEDIUM);
 	if(pmic_level_is_enabled(PMIC_LVL_HIGH)) pmic_disable_level(PMIC_LVL_HIGH);
 	
 	if (cpu_irq_is_enabled()) cpu_irq_disable();
+	
+	// Initialize RX buffer
+	rx_buffer = buffer_init(DEFAULT_RX_BUFFER_SIZE);
 	
 	// Enable IO service
 	ioport_init();
@@ -97,40 +100,45 @@ int main (void)
 #endif // ENVIRONMENT
 	
 	// Initialize USART
+	sysclk_enable_module(SYSCLK_PORT_C, PR_USART0_bm);
 	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
+	sysclk_enable_module(SYSCLK_PORT_E, PR_USART0_bm);
 	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
-	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
+
+	//Configure USART interrupts
+	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
 	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
-		
+	
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
 	
-	// Send command to sync baud rate with MC 60
-	while(true) {
-		bool success = usart_send_and_expect(USART_SERIAL, "AT\r", "OK");
-		if (success) break;
-	}
-	
-	// Send command to set fixed baud rate for MC 60
-	while(true) {
-		bool success = usart_send_and_expect(USART_SERIAL, "AT+IPR=115200&W\r", "OK");
-		if (success) break;
-	}
-
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
 	ioport_set_value(TEST_LED1, true); // Turn on LED
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
+
+	while (synced == false) {
+		if (response_ready == 1) {
+			if (check_response(&rx_buffer, "OK") == RESPONSE_OK) {
+				synced = true;
+			}
+			buffer_free(&rx_buffer);
+		} else {
+			usart_send(USART_SERIAL, "AT\r");
+		}
+	}
 	
 	while (true) {}
 }
 
 ISR(USART_TX_Vect) {}
 
-ISR(USART_RX_Vect) {}
+ISR(USART_RX_Vect) {
+	handle_rx_interrupt(USART_SERIAL);
+}

@@ -280,7 +280,6 @@
     <Folder Include="src\ASF\xmega\utils\preprocessor\" />
     <Folder Include="src\config\" />
     <Folder Include="src\buffer" />
-    <Folder Include="src\command" />
     <Folder Include="src\usart" />
   </ItemGroup>
   <ItemGroup>
@@ -291,12 +290,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\buffer\buffer.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\command\command.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\command\command.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\port_map.h">
