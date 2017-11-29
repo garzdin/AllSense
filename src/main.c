@@ -125,15 +125,12 @@ int main (void)
 
 	while (synced == false) {
 		if (response_ready == 1) {
-			if (check_response(&rx_buffer, "OK") == RESPONSE_OK) {
-				synced = true;
-			}
-			buffer_free(&rx_buffer);
+			if (check_response(&rx_buffer, "OK") == RESPONSE_OK) synced = true;
 		} else {
 			usart_send(USART_SERIAL, "AT\r");
 		}
 	}
-	
+		
 	while (true) {}
 }
 
