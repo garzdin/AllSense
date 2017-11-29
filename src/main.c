@@ -123,6 +123,7 @@ int main (void)
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 
+	// Sync up the USART baud with the MC 60 module
 	while (synced == false) {
 		if (response_ready == 1) {
 			if (check_response(&rx_buffer, "OK") == RESPONSE_OK) synced = true;
