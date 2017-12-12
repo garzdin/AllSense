@@ -32,9 +32,8 @@
 #include <asf.h>
 #include <port_map.h>
 #include <usart/usart_helpers.h>
-#include <buffer/buffer.h>
 
-volatile bool synced = false;
+bool synced = false;
 
 int main (void)
 {	
@@ -48,9 +47,6 @@ int main (void)
 	if(pmic_level_is_enabled(PMIC_LVL_HIGH)) pmic_disable_level(PMIC_LVL_HIGH);
 	
 	if (cpu_irq_is_enabled()) cpu_irq_disable();
-	
-	// Initialize RX buffer
-	rx_buffer = buffer_init(DEFAULT_RX_BUFFER_SIZE);
 	
 	// Enable IO service
 	ioport_init();
@@ -100,19 +96,16 @@ int main (void)
 #endif // ENVIRONMENT
 	
 	// Initialize USART
-	sysclk_enable_module(SYSCLK_PORT_C, PR_USART0_bm);
 	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
-	sysclk_enable_module(SYSCLK_PORT_E, PR_USART0_bm);
 	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 
-	//Configure USART interrupts
-	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
-	usart_set_tx_interrupt_level(USART_SERIAL, USART_INT_LVL_OFF);
-	
+	usart_init(USART_SERIAL);
+	usart_listen(USART_SERIAL);
+
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
@@ -125,18 +118,25 @@ int main (void)
 
 	// Sync up the USART baud with the MC 60 module
 	while (synced == false) {
-		if (response_ready == 1) {
-			if (check_response(&rx_buffer, "OK") == RESPONSE_OK) synced = true;
-		} else {
+		if (usart_available(USART_SERIAL) > 0) {
 			usart_send(USART_SERIAL, "AT\r");
 		}
-	}
 		
-	while (true) {}
+		if (check_response("OK") == 1) {
+			synced = true;
+		}
+	}
+
+	while (true) {
+		if (usart_available(USART_SERIAL) > 0) {
+			usart_send(USART_SERIAL, "AT+CPIN?\r");
+		}
+		if (check_response("SIM PIN") == 1) {
+			ioport_set_value(TEST_LED2, true);
+		}
+	}
 }
 
-ISR(USART_TX_Vect) {}
-
 ISR(USART_RX_Vect) {
-	handle_rx_interrupt(USART_SERIAL);
+	usart_recv(USART_SERIAL);
 }
