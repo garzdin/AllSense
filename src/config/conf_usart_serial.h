@@ -56,7 +56,7 @@
 #define USART_TX_Vect                   USARTC0_TXC_vect
 
 #define USART_DEBUG_SERIAL                    &USARTE0
-#define USART_DEBUG_SERIAL_BAUDRATE           9600
+#define USART_DEBUG_SERIAL_BAUDRATE           115200
 #define USART_DEBUG_SERIAL_CHAR_LENGTH        USART_CHSIZE_8BIT_gc
 #define USART_DEBUG_SERIAL_PARITY             USART_PMODE_DISABLED_gc
 #define USART_DEBUG_SERIAL_STOP_BIT           false
