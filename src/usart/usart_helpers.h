@@ -10,24 +10,25 @@
 
 #include <asf.h>
 #include <string.h>
+#include <util/atomic.h>
 
 #define CR '\r'
 #define NL '\n'
 
-#define _SS_MAX_RX_BUFF 64
-uint8_t _receive_buffer[_SS_MAX_RX_BUFF];
-uint8_t is_listening;
-volatile uint8_t _receive_buffer_tail;
-volatile uint8_t _receive_buffer_head;
-volatile uint8_t _buffer_overflow;
+#define FIFO_BUFFER_LEGNTH (uint8_t) 128
 
-void usart_init(USART_t *usart);
-void usart_listen(USART_t *usart);
-void usart_stop_listening(USART_t *usart);
-void usart_send(USART_t *usart, const char * command);
+union buffer_element {
+	uint8_t byte;
+	uint16_t halfword;
+	uint32_t word;
+};
+
+fifo_desc_t fifo_desc_rx;
+union buffer_element fifo_buffer_rx[FIFO_BUFFER_LEGNTH];
+
+uint8_t usart_init(USART_t *usart);
+void usart_send(USART_t *usart, const char *command);
 void usart_recv(USART_t *usart);
-uint8_t usart_read(USART_t *usart);
-uint8_t usart_available(USART_t *usart);
 uint8_t check_response(const char * expect);
 
 #endif /* USART_HELPERS_H_ */

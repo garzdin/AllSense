@@ -33,8 +33,6 @@
 #include <port_map.h>
 #include <usart/usart_helpers.h>
 
-bool synced = false;
-
 int main (void)
 {	
 	// Initialize board
@@ -97,44 +95,43 @@ int main (void)
 	
 	// Initialize USART
 	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
+	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
 #ifdef ENVIRONMENT
 	#if ENVIRONMENT == DEVELOPMENT
 	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
 	#endif // ENVIRONMENT == DEVELOPMENT
 #endif // ENVIRONMENT
 
-	usart_init(USART_SERIAL);
-	usart_listen(USART_SERIAL);
-
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
-	
-#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
-	ioport_set_value(TEST_LED1, true); // Turn on LED
-	#endif // ENVIRONMENT == DEVELOPMENT
-#endif // ENVIRONMENT
+
+if (usart_init(USART_SERIAL) > 0) {
+	#ifdef ENVIRONMENT
+		#if ENVIRONMENT == DEVELOPMENT
+		ioport_set_value(TEST_LED1, true); // Turn on LED
+		#endif // ENVIRONMENT == DEVELOPMENT
+	#endif // ENVIRONMENT
+}
 
 	// Sync up the USART baud with the MC 60 module
-	while (synced == false) {
-		if (usart_available(USART_SERIAL) > 0) {
-			usart_send(USART_SERIAL, "AT\r");
-		}
-		
-		if (check_response("OK") == 1) {
-			synced = true;
-		}
-	}
-
 	while (true) {
-		if (usart_available(USART_SERIAL) > 0) {
-			usart_send(USART_SERIAL, "AT+CPIN?\r");
-		}
-		if (check_response("SIM PIN") == 1) {
+		usart_send(USART_SERIAL, "AT\r");
+				
+		if (check_response("OK") == 1) break;
+	}
+		
+	usart_send(USART_SERIAL, "AT+CPIN?\r");
+	
+	if (check_response("SI PIN") == 1) {
+		usart_send(USART_SERIAL, "AT+CPIN=0000\r");
+		
+		if (check_response("READY") == 1) {
 			ioport_set_value(TEST_LED2, true);
 		}
 	}
+	
+	while (true) {}
 }
 
 ISR(USART_RX_Vect) {
