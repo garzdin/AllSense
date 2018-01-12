@@ -30,8 +30,12 @@
  */
 
 #include <asf.h>
+#include <stdio.h>
 #include <port_map.h>
-#include <usart/usart_helpers.h>
+#include <usart/usart_driver.h>
+#include <string.h>
+
+char buf[128];
 
 int main (void)
 {	
@@ -39,13 +43,6 @@ int main (void)
 	board_init();
 	sysclk_init();
 			
-	// Disable interrupts
-	if(pmic_level_is_enabled(PMIC_LVL_LOW)) pmic_disable_level(PMIC_LVL_LOW);
-	if(pmic_level_is_enabled(PMIC_LVL_MEDIUM)) pmic_disable_level(PMIC_LVL_MEDIUM);
-	if(pmic_level_is_enabled(PMIC_LVL_HIGH)) pmic_disable_level(PMIC_LVL_HIGH);
-	
-	if (cpu_irq_is_enabled()) cpu_irq_disable();
-	
 	// Enable IO service
 	ioport_init();
 	
@@ -65,24 +62,13 @@ int main (void)
 	ioport_set_pin_dir(C_RXD0, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(C_TXD0, IOPORT_DIR_OUTPUT);
 
-#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
+#ifdef DEBUG
 	// Set debugger pin dir
 	ioport_set_pin_dir(E_RXD0, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(E_TXD0, IOPORT_DIR_OUTPUT);
-	#endif // ENVIRONMENT == DEVELOPMENT
-#endif // ENVIRONMENT
+#endif // DEBUG
 	
-	// USART options
-	static usart_rs232_options_t USART_SERIAL_OPTIONS = {
-		.baudrate = USART_SERIAL_BAUDRATE,
-		.charlength = USART_SERIAL_CHAR_LENGTH,
-		.paritytype = USART_SERIAL_PARITY,
-		.stopbits = USART_SERIAL_STOP_BIT
-	};
-	
-#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
+#ifdef DEBUG
 	// Debugger options
 	static usart_rs232_options_t USART_SERIAL_DEBUG_OPTIONS = {
 		.baudrate = USART_DEBUG_SERIAL_BAUDRATE,
@@ -90,50 +76,31 @@ int main (void)
 		.paritytype = USART_DEBUG_SERIAL_PARITY,
 		.stopbits = USART_DEBUG_SERIAL_STOP_BIT
 	};
-	#endif // ENVIRONMENT == DEVELOPMENT
-#endif // ENVIRONMENT
+#endif // DEBUG
 	
-	// Initialize USART
-	usart_init_rs232(USART_SERIAL, &USART_SERIAL_OPTIONS);
-	usart_set_rx_interrupt_level(USART_SERIAL, USART_INT_LVL_LO);
-#ifdef ENVIRONMENT
-	#if ENVIRONMENT == DEVELOPMENT
+#ifdef DEBUG
 	usart_init_rs232(USART_DEBUG_SERIAL, &USART_SERIAL_DEBUG_OPTIONS);
-	#endif // ENVIRONMENT == DEVELOPMENT
-#endif // ENVIRONMENT
+#endif // DEBUG
 
+	FILE *mc60_tty = tty_init();
+	
 	// Setup interrupt services
 	pmic_init();
 	cpu_irq_enable();
 
-if (usart_init(USART_SERIAL) > 0) {
-	#ifdef ENVIRONMENT
-		#if ENVIRONMENT == DEVELOPMENT
-		ioport_set_value(TEST_LED1, true); // Turn on LED
-		#endif // ENVIRONMENT == DEVELOPMENT
-	#endif // ENVIRONMENT
-}
-
-	// Sync up the USART baud with the MC 60 module
 	while (true) {
-		usart_send(USART_SERIAL, "AT\r");
-				
-		if (check_response("OK") == 1) break;
-	}
-		
-	usart_send(USART_SERIAL, "AT+CPIN?\r");
-	
-	if (check_response("SI PIN") == 1) {
-		usart_send(USART_SERIAL, "AT+CPIN=0000\r");
-		
-		if (check_response("READY") == 1) {
-			ioport_set_value(TEST_LED2, true);
+		fprintf(mc60_tty, "%s", "AT\r");
+		if(fgets(buf, sizeof buf - 1, mc60_tty) == NULL) {
+			break;
+		}
+		if (strstr(buf, "OK") != NULL) {
+			break;
 		}
 	}
 	
-	while (true) {}
-}
-
-ISR(USART_RX_Vect) {
-	usart_recv(USART_SERIAL);
+	ioport_set_value(TEST_LED1, true);
+	
+	fprintf(stdout, "AT+CPIN?\r");
+	
+	while(true) {}
 }

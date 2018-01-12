@@ -47,13 +47,14 @@
 #ifndef CONF_USART_SERIAL_H_INCLUDED
 #define CONF_USART_SERIAL_H_INCLUDED
 
-#define USART_SERIAL                    &USARTC0
-#define USART_SERIAL_BAUDRATE           115200
-#define USART_SERIAL_CHAR_LENGTH        USART_CHSIZE_8BIT_gc
-#define USART_SERIAL_PARITY             USART_PMODE_DISABLED_gc
-#define USART_SERIAL_STOP_BIT           false
-#define USART_RX_Vect                   USARTC0_RXC_vect
-#define USART_TX_Vect                   USARTC0_TXC_vect
+#define TTY_USART              &USARTC0
+#define TTY_BAUDRATE           115200
+#define TTY_CHAR_LENGTH        USART_CHSIZE_8BIT_gc
+#define TTY_PARITY             USART_PMODE_DISABLED_gc
+#define TTY_STOP_BIT           false
+#define TTY_INTERRUPT_LEVEL    USART_INT_LVL_LO
+#define TTY_RXC_vect           USARTC0_RXC_vect
+#define TTY_DRE_vect           USARTC0_DRE_vect
 
 #define USART_DEBUG_SERIAL                    &USARTE0
 #define USART_DEBUG_SERIAL_BAUDRATE           115200
